@@ -17,4 +17,29 @@ RUN bash build_scripts/build.sh && rm -r build_scripts
 
 ENV SSL_CERT_FILE=/opt/_internal/certs.pem
 
+RUN bash mkdir /tmp_build \
+	&& cd /tmp_build \
+	&& curl -L https://github.com/Kitware/CMake/releases/download/v3.16.0-rc3/cmake-3.16.0-rc3.tar.gz -o cmake.tgz \
+	&& mkdir cmake_build  \
+	&& tar -xzf cmake.tgz -C cmake_build --strip-components 1 \ 
+	&& cd cmake_build \
+	&& ./bootstrap \
+	&& gmake \
+	&& gmake install \
+	&& yum -y erase cmake \
+	&& ln -s /usr/local/bin/cmake /usr/bin/cmake
+
+ARG GCC_VERSION=8.3.0
+
+
+RUN bash mkdir /tmp_build/cland_src \
+	&& git clone https://github.com/llvm/llvm-project.git /tmp_build/clang_src \
+	&& cd /tmp_build/clang_src \
+	&& git checkout 9.0.0 \
+	&& cd .. && mkdir clang_build && cd clang_build \
+	&& cmake -DLLVM_ENABLE_PROJECTS=clang -G "Unix Makefiles" ../clang_src/llvm \
+	&& make \
+	&& make install
+	  
+
 CMD ["/bin/bash"]
